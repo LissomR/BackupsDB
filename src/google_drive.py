@@ -1,4 +1,5 @@
 import os
+import json
 import pickle
 from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
@@ -23,18 +24,54 @@ class GoogleDriveUploader:
     def _authenticate(self):
         """
         Autentica con Google Drive usando credenciales de servicio o OAuth
+        Soporta tanto archivo local como variable de entorno
         """
         try:
-            # Intenta usar credenciales de servicio primero
-            if os.path.exists(self.credentials_file):
+            # Primero intenta leer de variable GOOGLE_CREDENTIALS_FILE (para Railway)
+            creds_json = os.getenv('GOOGLE_CREDENTIALS_FILE')
+            if creds_json:
+                try:
+                    creds_dict = json.loads(creds_json)
+                    creds = service_account.Credentials.from_service_account_info(
+                        creds_dict,
+                        scopes=['https://www.googleapis.com/auth/drive.file']
+                    )
+                    logger.info("Autenticación con Google Drive exitosa (desde GOOGLE_CREDENTIALS_FILE)")
+                    return build('drive', 'v3', credentials=creds)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error al parsear JSON de GOOGLE_CREDENTIALS_FILE: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error al autenticar con GOOGLE_CREDENTIALS_FILE: {str(e)}")
+            
+            # Intenta GOOGLE_CREDENTIALS como alternativa
+            creds_json = os.getenv('GOOGLE_CREDENTIALS')
+            if creds_json:
+                try:
+                    creds_dict = json.loads(creds_json)
+                    creds = service_account.Credentials.from_service_account_info(
+                        creds_dict,
+                        scopes=['https://www.googleapis.com/auth/drive.file']
+                    )
+                    logger.info("Autenticación con Google Drive exitosa (desde GOOGLE_CREDENTIALS)")
+                    return build('drive', 'v3', credentials=creds)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error al parsear JSON de GOOGLE_CREDENTIALS: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error al autenticar con GOOGLE_CREDENTIALS: {str(e)}")
+            
+            # Si no hay variables de entorno, intenta usar archivo local
+            credentials_file_path = os.getenv('GOOGLE_CREDENTIALS_FILE', 'credentials.json')
+            # Solo intenta leer como archivo si no es un JSON (es decir, es una ruta)
+            if os.path.exists(credentials_file_path):
                 creds = service_account.Credentials.from_service_account_file(
-                    self.credentials_file,
+                    credentials_file_path,
                     scopes=['https://www.googleapis.com/auth/drive.file']
                 )
-                logger.info("Autenticación con Google Drive exitosa (Service Account)")
+                logger.info("Autenticación con Google Drive exitosa (desde archivo local)")
                 return build('drive', 'v3', credentials=creds)
             else:
-                logger.error(f"Archivo de credenciales no encontrado: {self.credentials_file}")
+                logger.error("No se encontró credenciales de Google Drive")
+                logger.error("Configura GOOGLE_CREDENTIALS_FILE con el JSON completo en Railway")
                 return None
         except Exception as e:
             logger.error(f"Error en autenticación de Google Drive: {str(e)}")
