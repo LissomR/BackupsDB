@@ -6,7 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from backup import PostgreSQLBackup
-from google_drive import GoogleDriveUploader
+from s3_uploader import S3Uploader
 
 # Configurar logging
 log_dir = os.path.join(os.path.dirname(__file__), '..', 'logs')
@@ -30,7 +30,7 @@ load_dotenv()
 class BackupScheduler:
     def __init__(self):
         self.backup = PostgreSQLBackup()
-        self.drive = GoogleDriveUploader()
+        self.s3 = S3Uploader()
         self.backup_hour = str(os.getenv('BACKUP_HOUR', '2')).zfill(2)
         self.backup_minute = str(os.getenv('BACKUP_MINUTE', '0')).zfill(2)
     
@@ -38,7 +38,7 @@ class BackupScheduler:
         """
         Ejecuta el proceso completo de backup:
         1. Crea el backup de PostgreSQL
-        2. Sube a Google Drive
+        2. Sube a AWS S3
         """
         try:
             logger.info("=" * 60)
@@ -56,12 +56,13 @@ class BackupScheduler:
                 logger.error("El backup no pasó la verificación")
                 return False
             
-            # Paso 3: Subir a Google Drive
-            logger.info("Subiendo backup a Google Drive...")
-            if self.drive.upload_file(backup_path):
-                logger.info("Backup subido a Google Drive exitosamente")
+            # Paso 3: Subir a AWS S3
+            logger.info("Subiendo backup a AWS S3...")
+            result = self.s3.upload_file(backup_path)
+            if result:
+                logger.info(f"Backup subido a S3 exitosamente: {result['key']}")
             else:
-                logger.warning("No se pudo subir a Google Drive (continuando...)")
+                logger.warning("No se pudo subir a S3 (continuando...)")
             
             logger.info("=" * 60)
             logger.info("Proceso de backup completado")

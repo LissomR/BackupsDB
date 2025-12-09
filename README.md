@@ -1,11 +1,11 @@
 # Backup Database Automation
 
-Este proyecto automatiza backups diarios de una base de datos PostgreSQL y los sube automáticamente a Google Drive.
+Este proyecto automatiza backups diarios de una base de datos PostgreSQL y los sube automáticamente a AWS S3.
 
 ## Características
 
 - **Backup Automático Diario**: Programa backups de PostgreSQL según horario configurado
-- **Google Drive Integration**: Sube automáticamente los backups a tu Google Drive
+- **AWS S3 Integration**: Sube automáticamente los backups a tu bucket de S3
 - **Logging Completo**: Registra todas las operaciones en archivos de log
 - **Compatible con Railway**: Fácil de desplegar en Railway
 
@@ -13,7 +13,7 @@ Este proyecto automatiza backups diarios de una base de datos PostgreSQL y los s
 
 - Python 3.8+
 - PostgreSQL instalado y ejecutándose
-- Cuenta de Google (para Google Drive)
+- Cuenta de AWS (para S3)
 - Git instalado
 
 ## Instalación
@@ -55,22 +55,24 @@ DB_NAME=tu_base_de_datos
 DB_USER=tu_usuario
 DB_PASSWORD=tu_contraseña
 
-GOOGLE_DRIVE_FOLDER_ID=tu_id_carpeta_google_drive
-GOOGLE_CREDENTIALS_FILE=credentials.json
+AWS_ACCESS_KEY_ID=tu_aws_access_key
+AWS_SECRET_ACCESS_KEY=tu_aws_secret_key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=tu-bucket-name
 
 BACKUP_HOUR=2
 BACKUP_MINUTE=0
 ```
 
-### 5. Configurar Google Drive
+### 5. Configurar AWS S3
 
-Para usar Google Drive, necesitas un archivo `credentials.json`:
+Para usar AWS S3:
 
-1. Ir a [Google Cloud Console](https://console.cloud.google.com/)
-2. Crear un nuevo proyecto
-3. Activar la API de Google Drive
-4. Crear una credencial de servicio (Service Account)
-5. Descargar el archivo JSON y guardarlo como `credentials.json` en la raíz del proyecto
+1. Ir a [AWS Console](https://console.aws.amazon.com/)
+2. Crear un bucket de S3
+3. Crear un usuario IAM con permisos de S3 (s3:PutObject, s3:GetObject)
+4. Generar Access Key y Secret Key
+5. Configurar las credenciales en `.env`
 
 ## Despliegue en Railway
 
@@ -95,24 +97,16 @@ DB_NAME=tu_base_de_datos
 DB_USER=tu_usuario
 DB_PASSWORD=tu_contraseña
 
-GOOGLE_DRIVE_FOLDER_ID=tu_folder_id
-GOOGLE_CREDENTIALS_FILE=credentials.json
+AWS_ACCESS_KEY_ID=tu_aws_access_key
+AWS_SECRET_ACCESS_KEY=tu_aws_secret_key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=tu-bucket-name
 
 BACKUP_HOUR=2
 BACKUP_MINUTE=0
 ```
 
-### 4. Configurar credenciales de Google Drive
-
-Opción A (Recomendado): Usa Railway Secrets
-- Ve a la sección de variables
-- Copia el contenido completo de tu `credentials.json`
-- Pégalo en una variable (puede ser multi-línea)
-
-Opción B: Subir el archivo directamente
-- Adjunta el archivo `credentials.json` en la configuración de Railway
-
-### 5. Desplegar
+### 4. Desplegar
 
 Railway detectará automáticamente el `Procfile` y ejecutará:
 
@@ -184,7 +178,7 @@ BackupsDB/
 ├── src/
 │   ├── __init__.py              # Inicializador del módulo
 │   ├── backup.py                # Módulo de backup PostgreSQL
-│   ├── google_drive.py          # Módulo de Google Drive
+│   ├── s3_uploader.py           # Módulo de AWS S3
 │   └── scheduler.py             # Scheduler principal
 ├── config/                      # Directorio de configuración
 ├── logs/                        # Logs del sistema
@@ -201,12 +195,12 @@ BackupsDB/
 ### Error de conexión a PostgreSQL
 - Verificar que PostgreSQL esté ejecutándose
 - Verificar credenciales en `.env`
-- Verificar que pg_dump está instalado: `which pg_dump`
+- Verificar conectividad de red
 
-### Error de autenticación en Google Drive
-- Verificar que `credentials.json` existe y es válido
-- Verificar que la carpeta ID en Google Drive es correcta
-- Verificar permisos de la cuenta de servicio
+### Error de autenticación en AWS S3
+- Verificar que las credenciales AWS son correctas
+- Verificar que el bucket existe y el usuario tiene permisos
+- Verificar la región configurada
 
 ### Error en Railway
 - Ver logs en el dashboard de Railway
@@ -233,6 +227,6 @@ Este proyecto es de código abierto. Úsalo libremente.
 
 Para más información sobre las librerías utilizadas:
 - [psycopg2](https://www.psycopg.org/)
-- [Google API Python Client](https://github.com/googleapis/google-api-python-client)
+- [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
 - [schedule](https://schedule.readthedocs.io/)
 - [python-dotenv](https://github.com/theskumar/python-dotenv)

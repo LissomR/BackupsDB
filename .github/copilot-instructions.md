@@ -1,13 +1,13 @@
 # Copilot Instructions
 
-Este proyecto es un sistema automático de backup de bases de datos PostgreSQL con integración a Google Drive.
+Este proyecto es un sistema automático de backup de bases de datos PostgreSQL con integración a AWS S3.
 
 ## Estructura Principal
 
 El proyecto utiliza un arquitectura modular con los siguientes componentes:
 
-1. **backup.py** - Maneja la creación de backups de PostgreSQL
-2. **google_drive.py** - Integración con Google Drive
+1. **backup.py** - Maneja la creación de backups de PostgreSQL usando psycopg2
+2. **s3_uploader.py** - Integración con AWS S3
 3. **scheduler.py** - Orquestador principal con planificación de tareas
 
 ## Configuración Inicial
@@ -17,7 +17,7 @@ Antes de ejecutar:
 1. Instalar dependencias: `pip install -r requirements.txt`
 2. Copiar y configurar: `cp .env.example .env`
 3. Llenar credenciales necesarias en `.env`
-4. Preparar `credentials.json` para Google Drive
+4. Configurar credenciales AWS (Access Key y Secret Key)
 
 ## Ejecución
 
@@ -30,13 +30,13 @@ El sistema ejecutará automáticamente un backup diario en la hora especificada 
 ## Variables de Entorno Necesarias
 
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` - PostgreSQL
-- `GOOGLE_DRIVE_FOLDER_ID`, `GOOGLE_CREDENTIALS_FILE` - Google Drive
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME` - AWS S3
 - `BACKUP_HOUR`, `BACKUP_MINUTE` - Horario de backup
 
 ## Seguridad
 
-- Nunca commitar `.env` o `credentials.json`
-- Usar tokens con permisos limitados
+- Nunca commitar `.env`
+- Usar credenciales AWS con permisos limitados (solo S3)
 - Mantener credenciales en archivos seguros
 
 ## Despliegue en Railway
