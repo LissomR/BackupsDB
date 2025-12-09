@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-Este proyecto es un sistema automático de backup de bases de datos PostgreSQL con integración a Google Drive y GitHub.
+Este proyecto es un sistema automático de backup de bases de datos PostgreSQL con integración a Google Drive.
 
 ## Estructura Principal
 
@@ -8,8 +8,7 @@ El proyecto utiliza un arquitectura modular con los siguientes componentes:
 
 1. **backup.py** - Maneja la creación de backups de PostgreSQL
 2. **google_drive.py** - Integración con Google Drive
-3. **github_uploader.py** - Integración con GitHub
-4. **scheduler.py** - Orquestador principal con planificación de tareas
+3. **scheduler.py** - Orquestador principal con planificación de tareas
 
 ## Configuración Inicial
 
@@ -32,7 +31,6 @@ El sistema ejecutará automáticamente un backup diario en la hora especificada 
 
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` - PostgreSQL
 - `GOOGLE_DRIVE_FOLDER_ID`, `GOOGLE_CREDENTIALS_FILE` - Google Drive
-- `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME` - GitHub
 - `BACKUP_HOUR`, `BACKUP_MINUTE` - Horario de backup
 
 ## Seguridad
@@ -40,3 +38,11 @@ El sistema ejecutará automáticamente un backup diario en la hora especificada 
 - Nunca commitar `.env` o `credentials.json`
 - Usar tokens con permisos limitados
 - Mantener credenciales en archivos seguros
+
+## Despliegue en Railway
+
+El proyecto incluye un `Procfile` para desplegar en Railway:
+- Railway ejecutará automáticamente `python src/scheduler.py`
+- Configura todas las variables de entorno en el dashboard de Railway
+- El backup se ejecutará según el horario especificado en `BACKUP_HOUR` y `BACKUP_MINUTE`
+
