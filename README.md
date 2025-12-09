@@ -1,34 +1,34 @@
 # Backup Database Automation
 
-Este proyecto automatiza backups diarios de una base de datos PostgreSQL y los sube a Google Drive y GitHub.
+Este proyecto automatiza backups diarios de una base de datos PostgreSQL y los sube automáticamente a Google Drive.
 
 ## Características
 
 - **Backup Automático Diario**: Programa backups de PostgreSQL según horario configurado
 - **Google Drive Integration**: Sube automáticamente los backups a tu Google Drive
-- **GitHub Integration**: Almacena copias de los backups en tu repositorio GitHub
 - **Logging Completo**: Registra todas las operaciones en archivos de log
+- **Compatible con Railway**: Fácil de desplegar en Railway
 
 ## Requisitos
 
 - Python 3.8+
 - PostgreSQL instalado y ejecutándose
 - Cuenta de Google (para Google Drive)
-- Token de acceso de GitHub
 - Git instalado
 
 ## Instalación
 
-### 1. Clonar o descargar el proyecto
+### 1. Clonar el proyecto
 
 ```bash
-cd /home/luis/BackupsDB
+git clone https://github.com/LissomR/BackupsDB.git
+cd BackupsDB
 ```
 
 ### 2. Crear un entorno virtual
 
 ```bash
-python3 -m venv venv
+python3.8 -m venv venv
 source venv/bin/activate
 ```
 
@@ -58,29 +58,67 @@ DB_PASSWORD=tu_contraseña
 GOOGLE_DRIVE_FOLDER_ID=tu_id_carpeta_google_drive
 GOOGLE_CREDENTIALS_FILE=credentials.json
 
-GITHUB_TOKEN=tu_token_github
-GITHUB_REPO_OWNER=tu_usuario_github
-GITHUB_REPO_NAME=nombre_repo
-
 BACKUP_HOUR=2
 BACKUP_MINUTE=0
 ```
 
-### 5. Configurar Google Drive (Opcional)
+### 5. Configurar Google Drive
 
 Para usar Google Drive, necesitas un archivo `credentials.json`:
 
 1. Ir a [Google Cloud Console](https://console.cloud.google.com/)
 2. Crear un nuevo proyecto
 3. Activar la API de Google Drive
-4. Crear una credencial de servicio o cuenta de servicio
-5. Descargar el JSON y guardarlo como `credentials.json`
+4. Crear una credencial de servicio (Service Account)
+5. Descargar el archivo JSON y guardarlo como `credentials.json` en la raíz del proyecto
 
-### 6. Configurar GitHub
+## Despliegue en Railway
 
-1. Generar un token de acceso personal en [GitHub Settings](https://github.com/settings/tokens)
-2. Asegurar permisos de `repo` y `workflow`
-3. Establecer el token en la variable `GITHUB_TOKEN` del archivo `.env`
+### 1. Crear cuenta en Railway
+
+Ve a [Railway.app](https://railway.app) y crea una cuenta.
+
+### 2. Crear nuevo proyecto
+
+1. Haz clic en "New Project"
+2. Selecciona "Deploy from GitHub"
+3. Conecta tu repositorio `BackupsDB`
+
+### 3. Configurar variables de entorno en Railway
+
+En el dashboard, ve a **Variables** y añade:
+
+```
+DB_HOST=tu_host
+DB_PORT=5432
+DB_NAME=tu_base_de_datos
+DB_USER=tu_usuario
+DB_PASSWORD=tu_contraseña
+
+GOOGLE_DRIVE_FOLDER_ID=tu_folder_id
+GOOGLE_CREDENTIALS_FILE=credentials.json
+
+BACKUP_HOUR=2
+BACKUP_MINUTE=0
+```
+
+### 4. Configurar credenciales de Google Drive
+
+Opción A (Recomendado): Usa Railway Secrets
+- Ve a la sección de variables
+- Copia el contenido completo de tu `credentials.json`
+- Pégalo en una variable (puede ser multi-línea)
+
+Opción B: Subir el archivo directamente
+- Adjunta el archivo `credentials.json` en la configuración de Railway
+
+### 5. Desplegar
+
+Railway detectará automáticamente el `Procfile` y ejecutará:
+
+```
+python src/scheduler.py
+```
 
 ## Uso
 
@@ -96,7 +134,7 @@ python src/scheduler.py
 python -c "from src.backup import PostgreSQLBackup; backup = PostgreSQLBackup(); backup.create_backup()"
 ```
 
-### Ver logs
+### Ver logs en tiempo real
 
 ```bash
 tail -f logs/backup_$(date +%Y%m%d).log
@@ -142,33 +180,20 @@ nohup python src/scheduler.py > logs/scheduler.log 2>&1 &
 ## Estructura del Proyecto
 
 ```
-/home/luis/BackupsDB/
+BackupsDB/
 ├── src/
-│   ├── backup.py              # Módulo de backup PostgreSQL
-│   ├── google_drive.py        # Módulo de Google Drive
-│   ├── github_uploader.py     # Módulo de GitHub
-│   └── scheduler.py           # Scheduler principal
-├── config/                    # Archivos de configuración
-├── logs/                      # Logs del sistema
-├── backups/                   # Backups locales (temporal)
-├── requirements.txt           # Dependencias de Python
-├── .env.example              # Ejemplo de variables de entorno
-├── .gitignore                # Archivos a ignorar en Git
-└── README.md                 # Este archivo
-```
-
-## Configuración de Cron (Alternativa)
-
-Si prefieres usar cron en lugar del scheduler de Python:
-
-```bash
-crontab -e
-```
-
-Agregar la línea (para ejecutar a las 2:00 AM):
-
-```
-0 2 * * * cd /home/luis/BackupsDB && /home/luis/BackupsDB/venv/bin/python src/scheduler.py >> logs/cron.log 2>&1
+│   ├── __init__.py              # Inicializador del módulo
+│   ├── backup.py                # Módulo de backup PostgreSQL
+│   ├── google_drive.py          # Módulo de Google Drive
+│   └── scheduler.py             # Scheduler principal
+├── config/                      # Directorio de configuración
+├── logs/                        # Logs del sistema
+├── backups/                     # Backups locales (temporal)
+├── Procfile                     # Configuración para Railway
+├── requirements.txt             # Dependencias de Python
+├── .env.example                # Ejemplo de variables de entorno
+├── .gitignore                  # Archivos a ignorar en Git
+└── README.md                   # Este archivo
 ```
 
 ## Solución de Problemas
@@ -183,10 +208,10 @@ Agregar la línea (para ejecutar a las 2:00 AM):
 - Verificar que la carpeta ID en Google Drive es correcta
 - Verificar permisos de la cuenta de servicio
 
-### Error de autenticación en GitHub
-- Verificar que el token no ha expirado
-- Verificar que el token tiene permisos suficientes
-- Verificar que el repositorio existe
+### Error en Railway
+- Ver logs en el dashboard de Railway
+- Verificar que todas las variables de entorno están configuradas
+- Verificar el `Procfile` existe en la raíz
 
 ## Logs y Monitoreo
 
@@ -209,5 +234,5 @@ Este proyecto es de código abierto. Úsalo libremente.
 Para más información sobre las librerías utilizadas:
 - [psycopg2](https://www.psycopg.org/)
 - [Google API Python Client](https://github.com/googleapis/google-api-python-client)
-- [PyGithub](https://pygithub.readthedocs.io/)
 - [schedule](https://schedule.readthedocs.io/)
+- [python-dotenv](https://github.com/theskumar/python-dotenv)

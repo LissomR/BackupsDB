@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 
 from backup import PostgreSQLBackup
 from google_drive import GoogleDriveUploader
-from github_uploader import GitHubUploader
 
 # Configurar logging
 log_dir = os.path.join(os.path.dirname(__file__), '..', 'logs')
@@ -32,7 +31,6 @@ class BackupScheduler:
     def __init__(self):
         self.backup = PostgreSQLBackup()
         self.drive = GoogleDriveUploader()
-        self.github = GitHubUploader()
         self.backup_hour = os.getenv('BACKUP_HOUR', '2')
         self.backup_minute = os.getenv('BACKUP_MINUTE', '0')
     
@@ -41,7 +39,6 @@ class BackupScheduler:
         Ejecuta el proceso completo de backup:
         1. Crea el backup de PostgreSQL
         2. Sube a Google Drive
-        3. Sube a GitHub
         """
         try:
             logger.info("=" * 60)
@@ -65,13 +62,6 @@ class BackupScheduler:
                 logger.info("Backup subido a Google Drive exitosamente")
             else:
                 logger.warning("No se pudo subir a Google Drive (continuando...)")
-            
-            # Paso 4: Subir a GitHub
-            logger.info("Subiendo backup a GitHub...")
-            if self.github.upload_file(backup_path):
-                logger.info("Backup subido a GitHub exitosamente")
-            else:
-                logger.warning("No se pudo subir a GitHub (continuando...)")
             
             logger.info("=" * 60)
             logger.info("Proceso de backup completado")
