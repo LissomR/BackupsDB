@@ -31,8 +31,8 @@ class BackupScheduler:
     def __init__(self):
         self.backup = PostgreSQLBackup()
         self.drive = GoogleDriveUploader()
-        self.backup_hour = os.getenv('BACKUP_HOUR', '2')
-        self.backup_minute = os.getenv('BACKUP_MINUTE', '0')
+        self.backup_hour = str(os.getenv('BACKUP_HOUR', '2')).zfill(2)
+        self.backup_minute = str(os.getenv('BACKUP_MINUTE', '0')).zfill(2)
     
     def perform_backup(self):
         """
@@ -76,9 +76,15 @@ class BackupScheduler:
         """
         Configura el programador de tareas
         """
-        schedule_time = f"{self.backup_hour}:{self.backup_minute}"
-        logger.info(f"Programando backup diario a las {schedule_time}")
-        schedule.every().day.at(schedule_time).do(self.perform_backup)
+        try:
+            schedule_time = f"{self.backup_hour}:{self.backup_minute}"
+            logger.info(f"Programando backup diario a las {schedule_time}")
+            schedule.every().day.at(schedule_time).do(self.perform_backup)
+            logger.info(f"Backup programado exitosamente para las {schedule_time}")
+        except Exception as e:
+            logger.error(f"Error al programar backup: {str(e)}")
+            logger.error(f"BACKUP_HOUR={self.backup_hour}, BACKUP_MINUTE={self.backup_minute}")
+            raise
     
     def start(self):
         """
